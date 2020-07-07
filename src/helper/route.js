@@ -11,6 +11,7 @@ const conf = require('../config/defaultConfig.js')
 const mime = require('./mime.js')
 const compress = require('./compress.js')
 const ranges = require('./range.js')
+const isFresh = require('./cache.js')
 module.exports=async function(req, res, filePath){
     try{
         const stats =  await stat(filePath)
@@ -18,6 +19,12 @@ module.exports=async function(req, res, filePath){
             const contentType = mime(filePath)
             res.statusCode = 200
             res.setHeader('Content-Type',contentType)
+            console.log(isFresh(stats,req, res))
+            if(isFresh(stats,req, res)){
+                res.statusCode = 304
+                res.end()
+                return
+            }
             let rs
             const {code,start,end} = ranges(stats.size, req, res)
             if(code == 200){
